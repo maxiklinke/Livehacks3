@@ -1229,29 +1229,52 @@ class ViewController: UIViewController, ARSCNViewDelegate, UIPopoverPresentation
             
             let result = observations.map({$0 as? VNFaceObservation})
             
+            if let observation = result.first {
+                self.lastObservation = observation
+            }
+            
             for observation in result {
                 if let observation = observation {
+                    
+                    let midPoint = observation.boundingBox.mid
+                    
+                    print(observation.boundingBox.mid)
                     
                     let minX = observation.boundingBox.minX
                     let minY = observation.boundingBox.minY
                     let maxX = observation.boundingBox.maxX
                     let maxY = observation.boundingBox.maxY
                     
+                    let width = observation.boundingBox.size.width
+                    let height = observation.boundingBox.size.height
+                    let x = observation.boundingBox.origin.x
+                    let y = observation.boundingBox.origin.y
+                    
+                    
                     var topLeft = CGPoint()
-                    topLeft.x = minX
-                    topLeft.y = minY
+                    //topLeft.x = minX
+                    //topLeft.y = minY
+                    topLeft.x = x
+                    topLeft.y = y
                     
                     var topRight = CGPoint()
-                    topRight.x = maxX
-                    topRight.y = minY
+                    //topRight.x = maxX
+                    //topRight.y = minY
+                    topRight.x = x+width
+                    topRight.y = y
                     
                     var bottomLeft = CGPoint()
-                    bottomLeft.x = minX
-                    bottomLeft.y = maxY
+                    //bottomLeft.x = minX
+                    //bottomLeft.y = maxY
+                    bottomLeft.x = x
+                    bottomLeft.y = y+height
                     
                     var bottomRight = CGPoint()
-                    bottomRight.x = maxX
-                    bottomRight.y = maxY
+                    //bottomRight.x = maxX
+                    //bottomRight.y = maxY
+                    bottomRight.x = x+width
+                    bottomRight.y = y+height
+                    
                     
 
                     
@@ -1306,8 +1329,17 @@ class ViewController: UIViewController, ARSCNViewDelegate, UIPopoverPresentation
                         
                     }
                     
+                    let hitResultMidArray = frame.hitTest(midPoint, types: [.featurePoint])
+                    guard let hitResultMid = hitResultMidArray.first else {
+                        continue
+                    }
+                    let midVector = SCNVector3Make(hitResultMid.worldTransform.columns.3.x, hitResultMid.worldTransform.columns.3.y, hitResultMid.worldTransform.columns.3.z)
                     
-                    self.prepareSecond()
+                    self.place2DImage(width: 0.20, vecNormal: self.vecNormal!, vecToCenter: midVector, offsetHoriz: Float(0), offsetVert: Float(0), image: #imageLiteral(resourceName: "widgets-2"))
+                    
+                    self.doTrackingDetection()
+                    
+                    //self.prepareSecond()
                 }
             }
             
@@ -1319,6 +1351,53 @@ class ViewController: UIViewController, ARSCNViewDelegate, UIPopoverPresentation
         
         return faceDetectionRequest
     }
+    
+    private var lastObservation: VNDetectedObjectObservation?
+    
+    func doTrackingDetection(){
+        if let arFrame = sceneView.session.currentFrame {
+            let pixelBuffer = arFrame.capturedImage
+            
+            
+            
+            let sequenceHandler = VNSequenceRequestHandler()
+            
+            do {
+                try sequenceHandler.perform([self.initSequenceRequest(frame: arFrame)], on: pixelBuffer, orientation: CGImagePropertyOrientation(rawValue: 6)!)
+            } catch {
+                print(error)
+            }
+            
+            
+        }
+    }
+    
+    func initSequenceRequest(frame: ARFrame) -> VNTrackObjectRequest{
+        let sequenceDetectionRequest = VNTrackObjectRequest(detectedObjectObservation: self.lastObservation!) { (request, error) in
+            guard let newObservation = request.results?.first as? VNRectangleObservation else {
+                return}
+            
+            
+            let midPoint = newObservation.boundingBox.mid
+            
+            print(newObservation.boundingBox.mid)
+            
+            let hitResultMidArray = frame.hitTest(midPoint, types: [.featurePoint])
+            guard let hitResultMid = hitResultMidArray.first else {
+                return
+            }
+            let midVector = SCNVector3Make(hitResultMid.worldTransform.columns.3.x, hitResultMid.worldTransform.columns.3.y, hitResultMid.worldTransform.columns.3.z)
+            
+            self.place2DImage(width: 0.20, vecNormal: self.vecNormal!, vecToCenter: midVector, offsetHoriz: Float(0), offsetVert: Float(0), image: #imageLiteral(resourceName: "widgets-2"))
+            
+            self.doTrackingDetection()
+            
+        }
+        
+        sequenceDetectionRequest.trackingLevel = .accurate
+        return sequenceDetectionRequest
+    }
+    
     
 
     //---------------------------------------------- STUFF TO PLACE A 2D OBJECT ----------------------------------------------
