@@ -22,6 +22,7 @@
 		A75020652013975E00E610C6 /* VideoStream.swift in Sources */ = {isa = PBXBuildFile; fileRef = A75020642013975E00E610C6 /* VideoStream.swift */; };
 		A750206A2013E26C00E610C6 /* VideoViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A75020692013E26C00E610C6 /* VideoViewController.swift */; };
 		A7D89E4720263AC9006A6A59 /* Mock.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7D89E4620263AC9006A6A59 /* Mock.swift */; };
+		A7D89E4920265391006A6A59 /* StartController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7D89E4820265391006A6A59 /* StartController.swift */; };
 		C40FE5291EC239F100732B01 /* Candle.swift in Sources */ = {isa = PBXBuildFile; fileRef = C40FE5231EC239F100732B01 /* Candle.swift */; };
 		C40FE52A1EC239F100732B01 /* Chair.swift in Sources */ = {isa = PBXBuildFile; fileRef = C40FE5241EC239F100732B01 /* Chair.swift */; };
 		C40FE52B1EC239F100732B01 /* Cup.swift in Sources */ = {isa = PBXBuildFile; fileRef = C40FE5251EC239F100732B01 /* Cup.swift */; };
@@ -54,6 +55,7 @@
 		A75020642013975E00E610C6 /* VideoStream.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoStream.swift; sourceTree = "<group>"; };
 		A75020692013E26C00E610C6 /* VideoViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoViewController.swift; sourceTree = "<group>"; };
 		A7D89E4620263AC9006A6A59 /* Mock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Mock.swift; sourceTree = "<group>"; };
+		A7D89E4820265391006A6A59 /* StartController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartController.swift; sourceTree = "<group>"; };
 		C40FE5231EC239F100732B01 /* Candle.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = Candle.swift; path = "ARKitExample/Virtual Objects/Candle.swift"; sourceTree = SOURCE_ROOT; };
 		C40FE5241EC239F100732B01 /* Chair.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = Chair.swift; path = "ARKitExample/Virtual Objects/Chair.swift"; sourceTree = SOURCE_ROOT; };
 		C40FE5251EC239F100732B01 /* Cup.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = Cup.swift; path = "ARKitExample/Virtual Objects/Cup.swift"; sourceTree = SOURCE_ROOT; };
@@ -114,6 +116,7 @@
 			children = (
 				3929C48B1E89EC2C00E00B60 /* AppDelegate.swift */,
 				3929C48D1E89EC2C00E00B60 /* ViewController.swift */,
+				A7D89E4820265391006A6A59 /* StartController.swift */,
 				A75020632013970700E610C6 /* Plane Objects */,
 				C40DF57B1EC2330700D9D59E /* Virtual Objects */,
 				113B64D01ECA81CA0071CBD1 /* UI Elements */,
@@ -251,6 +254,7 @@
 				3929C48E1E89EC2C00E00B60 /* ViewController.swift in Sources */,
 				C41366B91EB80DD400EC054A /* TextManager.swift in Sources */,
 				39C0B95A1E9C6B1F003FCA0C /* Utilities.swift in Sources */,
+				A7D89E4920265391006A6A59 /* StartController.swift in Sources */,
 				C40FE52E1EC239F100732B01 /* Vase.swift in Sources */,
 				392BB82C1EA19A7C00FBBAC8 /* Plane.swift in Sources */,
 				3987BEDC1E9E057F00167FAC /* Gesture.swift in Sources */,
