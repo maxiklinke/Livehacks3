@@ -27,7 +27,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, UIPopoverPresentation
 		updateSettings()
 		resetVirtualObjectAll()
         
-        self.prepareFirst()
+        self.prepareSecond()
     }
 
 	override func viewDidAppear(_ animated: Bool) {
@@ -625,6 +625,10 @@ class ViewController: UIViewController, ARSCNViewDelegate, UIPopoverPresentation
         resetVirtualObject(at: index)
     }
 	
+    func didSelectNumber(number: Int) {
+        self.smileyNumber = number
+    }
+    
     // MARK: - Planes
 	
 	var planes = [ARPlaneAnchor: Plane]()
@@ -951,19 +955,6 @@ class ViewController: UIViewController, ARSCNViewDelegate, UIPopoverPresentation
 	}
     
     
-    // ---------------------------------------- TO FORCE LANDSCAPE MODE -----------------------------------------
-    override var preferredInterfaceOrientationForPresentation: UIInterfaceOrientation {
-        return UIInterfaceOrientation.landscapeRight
-    }
-    
-    override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
-        return UIInterfaceOrientationMask.landscapeRight
-    }
-    
-    override var shouldAutorotate: Bool {
-        return false
-    }
-    
     
     
     
@@ -1214,6 +1205,30 @@ class ViewController: UIViewController, ARSCNViewDelegate, UIPopoverPresentation
         }
     }
     
+    var midPointsArray: [SCNVector3] = []
+    
+    func middelMidPoint(newPoint: SCNVector3, max: Int)->SCNVector3{
+        var count = 0
+        var x:Float = 0.0
+        var y:Float = 0.0
+        var z:Float = 0.0
+        
+        midPointsArray.append(newPoint)
+        if midPointsArray.count > max {
+            midPointsArray.remove(at: 0)
+        }
+        
+        for point in self.midPointsArray{
+            x += point.x
+            y += point.y
+            z += point.z
+        }
+        
+        return SCNVector3Make(x/Float(max), y/Float(max), z/Float(max))
+    }
+    
+    var smileyNumber = 0;
+    
     func initFaceDetectionRequest(frame: ARFrame) -> VNDetectFaceRectanglesRequest{
         
         
@@ -1260,10 +1275,13 @@ class ViewController: UIViewController, ARSCNViewDelegate, UIPopoverPresentation
                     let maxX = observation.boundingBox.maxX
                     let maxY = observation.boundingBox.maxY*/
                     
-                    let w = observation.boundingBox.size.width
-                    let h = observation.boundingBox.size.height
-                    let x = observation.boundingBox.origin.x
-                    let y = observation.boundingBox.origin.y
+                    let rect = observation.boundingBox
+                    
+                    
+                    let w = rect.maxX-rect.minX//observation.boundingBox.size.width
+                    let h = rect.maxY-rect.minY//observation.boundingBox.size.height
+                    let x = rect.minX//observation.boundingBox.midX - w*0.5
+                    let y = (1-rect.minY)-h//observation.boundingBox.midY - h*0.5
                     
                     let midPoint = CGPoint.init(x: x+0.5*w, y: y-0.5*h)
                     
@@ -1365,11 +1383,39 @@ class ViewController: UIViewController, ARSCNViewDelegate, UIPopoverPresentation
                     
                     print("Mid Vector \(midVector)")
                     
-                    self.place2DImage(width: 0.20, vecNormal: self.vecNormal!, vecToCenter: midVector, offsetHoriz: Float(0), offsetVert: Float(0), image: #imageLiteral(resourceName: "widgets-2"))
+                    //self.place2DImage(width: 0.20, vecNormal: self.vecNormal!, vecToCenter: midVector, offsetHoriz: Float(0), offsetVert: Float(0), image: #imageLiteral(resourceName: "widgets-2"))
+                    
+                    var modelName = "emoji"
+                    switch self.smileyNumber {
+                    case 0:
+                        modelName = "emoji"
+                        break
+                    case 1:
+                        modelName = "emoji1"
+                        break
+                    case 2:
+                        modelName = "emoji2"
+                        break
+                    case 3:
+                        modelName = "emoji3"
+                         break
+                    case 4:
+                        modelName = "emoji4"
+                        break
+                    case 5:
+                        modelName = "emoji5"
+                        break
+                    case 6:
+                        modelName = "emoji6"
+                        break
+                    default:
+                        modelName = "emoji"
+                        break
+                    }
+                    
+                    self.place3DObject(modelName: modelName, fileExtension: "dae", position: self.middelMidPoint(newPoint: midVector, max: 5), offsetY: 0.2)
                     
                     
-                    
-                    //self.prepareSecond()
                 }
             }
             
@@ -1502,6 +1548,32 @@ class ViewController: UIViewController, ARSCNViewDelegate, UIPopoverPresentation
         self.sceneView.scene.rootNode.addChildNode(node)
     }
     
+    func place3DObject(modelName: String, fileExtension: String, position: SCNVector3, offsetY: Float){
+        
+        guard let virtualObjectScene = SCNScene(named: "\(modelName).\(fileExtension)", inDirectory: "Models.scnassets/\(modelName)") else {
+            return
+        }
+        
+        let position2 = position + SCNVector3Make(0, offsetY, 0)
+        
+        let node = SCNNode()
+        node.position = position2
+        
+        for child in virtualObjectScene.rootNode.childNodes {
+            node.addChildNode(child)
+        }
+        
+        node.scale = SCNVector3Make(0.05, 0.05, 0.05)
+        
+        for virtualObject in lastPlacedNode {
+            virtualObject.removeFromParentNode()
+        }
+        self.lastPlacedNode.removeAll()
+        
+        self.lastPlacedNode.append(node)
+        self.sceneView.scene.rootNode.addChildNode(node)
+    }
+    
     func place2DImage(width: CGFloat, vecNormal: SCNVector3, vecToCenter: SCNVector3, offsetHoriz: Float, offsetVert: Float, image: UIImage) {
         
         let height = width*image.size.height/image.size.width
@@ -1532,6 +1604,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, UIPopoverPresentation
         self.lastPlacedNode.append(planeNode)
         self.sceneView.scene.rootNode.addChildNode(planeNode)
     }
+    
     
     func place2DVideo(width: CGFloat, height: CGFloat, vecNormal: SCNVector3, vecToCenter: SCNVector3, offsetHoriz: Float, offsetVert: Float) {
         
@@ -1779,22 +1852,13 @@ class ViewController: UIViewController, ARSCNViewDelegate, UIPopoverPresentation
         
         let rect = observation.boundingBox
         
-        print(rect.midX)
-        print(rect.midY)
-        print(rect.minX)
-        print(rect.minY)
-        print(rect.maxX)
-        print(rect.maxY)
         
         let w = rect.maxX-rect.minX//observation.boundingBox.size.width
         let h = rect.maxY-rect.minY//observation.boundingBox.size.height
         let x = rect.minX//observation.boundingBox.midX - w*0.5
         let y = (1-rect.minY)-h//observation.boundingBox.midY - h*0.5
         
-        print(w)
-        print(h)
-        print(x)
-        print(y)
+        
         
         
         let xCord = (x) * sceneView.frame.size.width
