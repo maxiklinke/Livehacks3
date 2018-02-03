@@ -102,6 +102,13 @@ class ViewController: UIViewController, ARSCNViewDelegate, UIPopoverPresentation
     // MARK: - ARSCNViewDelegate
 	
 	func renderer(_ renderer: SCNSceneRenderer, updateAtTime time: TimeInterval) {
+        
+        self.doFaceDetection()
+        
+        /*if self.lastObservation != nil {
+            self.doTrackingDetection()
+        }*/
+        
 		refreshFeaturePoints()
 		
 		DispatchQueue.main.async {
@@ -967,7 +974,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, UIPopoverPresentation
     //------------------------- CONSTANTS -------------------------
     let mWidthOf2DScreen = CGFloat(0.5)//0.4
     let mHeightOf2DScreen = CGFloat(0.281)//0.225
-    let debugRect = true
+    let debugRect = false
     
     //------------------------------------ HERE THE REAL STUFF IS DONE ------------------------------------------------------
     
@@ -1195,6 +1202,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, UIPopoverPresentation
             let requestOptions:[VNImageOption : Any] = [:]
             
             
+            
             let imageRequestHandler = VNImageRequestHandler(cvPixelBuffer: pixelBuffer, orientation: CGImagePropertyOrientation(rawValue: 6)!, options: requestOptions)
             
             do {
@@ -1235,46 +1243,59 @@ class ViewController: UIViewController, ARSCNViewDelegate, UIPopoverPresentation
             
             for observation in result {
                 if let observation = observation {
+                    DispatchQueue.main.async {
+                        self.highlightWord(observation: observation)
+                    }
                     
-                    let midPoint = observation.boundingBox.mid
+                    //let midPointWrong = observation.boundingBox.mid
+                    
+                    
+                    
+                    //var midPoint = CGPoint.init(x: midPointWrong.y, y: midPointWrong.x)
                     
                     print(observation.boundingBox.mid)
-                    
+                    /*
                     let minX = observation.boundingBox.minX
                     let minY = observation.boundingBox.minY
                     let maxX = observation.boundingBox.maxX
-                    let maxY = observation.boundingBox.maxY
+                    let maxY = observation.boundingBox.maxY*/
                     
-                    let width = observation.boundingBox.size.width
-                    let height = observation.boundingBox.size.height
+                    let w = observation.boundingBox.size.width
+                    let h = observation.boundingBox.size.height
                     let x = observation.boundingBox.origin.x
                     let y = observation.boundingBox.origin.y
+                    
+                    let midPoint = CGPoint.init(x: x+0.5*w, y: y-0.5*h)
                     
                     
                     var topLeft = CGPoint()
                     //topLeft.x = minX
                     //topLeft.y = minY
                     topLeft.x = x
-                    topLeft.y = y
+                    topLeft.y = y-h
                     
                     var topRight = CGPoint()
                     //topRight.x = maxX
                     //topRight.y = minY
-                    topRight.x = x+width
-                    topRight.y = y
+                    topRight.x = x+w
+                    topRight.y = y-h
                     
                     var bottomLeft = CGPoint()
                     //bottomLeft.x = minX
                     //bottomLeft.y = maxY
                     bottomLeft.x = x
-                    bottomLeft.y = y+height
+                    bottomLeft.y = y+h
                     
                     var bottomRight = CGPoint()
                     //bottomRight.x = maxX
                     //bottomRight.y = maxY
-                    bottomRight.x = x+width
-                    bottomRight.y = y+height
+                    bottomRight.x = x+w
+                    bottomRight.y = y
                     
+                    print("TopLeft \(topLeft)")
+                    print("TopRight \(topRight)")
+                    print("BottomLeft \(bottomLeft)")
+                    print("BottomRight \(bottomRight)")
                     
 
                     
@@ -1300,10 +1321,17 @@ class ViewController: UIViewController, ARSCNViewDelegate, UIPopoverPresentation
                     let bottomLeftVector = SCNVector3Make(hitResultBottomLeft.worldTransform.columns.3.x, hitResultBottomLeft.worldTransform.columns.3.y, hitResultBottomLeft.worldTransform.columns.3.z)
                     let bottomRightVector = SCNVector3Make(hitResultBottomRight.worldTransform.columns.3.x, hitResultBottomRight.worldTransform.columns.3.y, hitResultBottomRight.worldTransform.columns.3.z)
                     
+                    print("TopLeft \(topLeftVector)")
+                    print("TopRight \(topRightVector)")
+                    print("BottomLeft \(bottomLeftVector)")
+                    print("BottomRight \(bottomRightVector)")
+                    
                     let vectorHorizontal = topRightVector-topLeftVector
                     let vectorVertical = bottomLeftVector-topLeftVector
                     let vectorNormal = vectorHorizontal.cross(vectorVertical)
                     let vectorToPlaneCenter = bottomRightVector+(topLeftVector-bottomRightVector)*0.5
+                    
+                    print("VecNormal \(vectorNormal)")
                     
                     // SET VARIABLES
                     self.vecHalfRight = vectorHorizontal*0.5
@@ -1335,9 +1363,11 @@ class ViewController: UIViewController, ARSCNViewDelegate, UIPopoverPresentation
                     }
                     let midVector = SCNVector3Make(hitResultMid.worldTransform.columns.3.x, hitResultMid.worldTransform.columns.3.y, hitResultMid.worldTransform.columns.3.z)
                     
+                    print("Mid Vector \(midVector)")
+                    
                     self.place2DImage(width: 0.20, vecNormal: self.vecNormal!, vecToCenter: midVector, offsetHoriz: Float(0), offsetVert: Float(0), image: #imageLiteral(resourceName: "widgets-2"))
                     
-                    self.doTrackingDetection()
+                    
                     
                     //self.prepareSecond()
                 }
@@ -1353,8 +1383,12 @@ class ViewController: UIViewController, ARSCNViewDelegate, UIPopoverPresentation
     }
     
     private var lastObservation: VNDetectedObjectObservation?
+    private var lastPlacedNode: [SCNNode] = []
     
     func doTrackingDetection(){
+        
+        print("Tracking Detection")
+        
         if let arFrame = sceneView.session.currentFrame {
             let pixelBuffer = arFrame.capturedImage
             
@@ -1373,9 +1407,23 @@ class ViewController: UIViewController, ARSCNViewDelegate, UIPopoverPresentation
     }
     
     func initSequenceRequest(frame: ARFrame) -> VNTrackObjectRequest{
+        
+        
         let sequenceDetectionRequest = VNTrackObjectRequest(detectedObjectObservation: self.lastObservation!) { (request, error) in
-            guard let newObservation = request.results?.first as? VNRectangleObservation else {
+            
+            if error != nil {
+                print(error)
+            }
+            
+            if (request.results?.isEmpty)! {
+                print("Requests are empty")
+            }
+            
+            
+            guard let newObservation = request.results?.first as? VNDetectedObjectObservation else {
+                
                 return}
+            
             
             
             let midPoint = newObservation.boundingBox.mid
@@ -1386,11 +1434,13 @@ class ViewController: UIViewController, ARSCNViewDelegate, UIPopoverPresentation
             guard let hitResultMid = hitResultMidArray.first else {
                 return
             }
+            
+            
             let midVector = SCNVector3Make(hitResultMid.worldTransform.columns.3.x, hitResultMid.worldTransform.columns.3.y, hitResultMid.worldTransform.columns.3.z)
             
-            self.place2DImage(width: 0.20, vecNormal: self.vecNormal!, vecToCenter: midVector, offsetHoriz: Float(0), offsetVert: Float(0), image: #imageLiteral(resourceName: "widgets-2"))
+            self.place2DImage(width: 0.20, vecNormal: self.vecNormal!, vecToCenter: midVector, offsetHoriz: Float(0.0), offsetVert: Float(0.0), image: #imageLiteral(resourceName: "widgets-2"))
             
-            self.doTrackingDetection()
+            //self.doTrackingDetection()
             
         }
         
@@ -1420,6 +1470,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, UIPopoverPresentation
         let angle = acos(vecToCenter.norm().dot(vecNormal.norm()))
         
         //planeNode.rotation = SCNVector4Make(vecRotation.x, vecRotation.y, vecRotation.z, angle)
+        
         
         self.sceneView.scene.rootNode.addChildNode(planeNode)
     }
@@ -1465,14 +1516,20 @@ class ViewController: UIViewController, ARSCNViewDelegate, UIPopoverPresentation
         let vecOffsetHoriz = vecNormal.cross(vecOffsetVert).norm()*offsetHoriz
         
         planeNode.geometry = plane
-        planeNode.position = vecToCenter+vecOffsetVert+vecOffsetHoriz //CURRENT NORMAL VECTOR
+        planeNode.position = vecToCenter//+vecOffsetVert+vecOffsetHoriz //CURRENT NORMAL VECTOR
         
-        let vecRotation = vecToCenter.cross(vecNormal).norm()
+        /*let vecRotation = vecToCenter.cross(vecNormal).norm()
         let angle = acos(vecToCenter.norm().dot(vecNormal.norm()))
+        */
         
         //planeNode.rotation = SCNVector4Make(vecRotation.x, vecRotation.y, vecRotation.z, angle)
         
-        self.nodes.append(planeNode)
+        for virtualObject in lastPlacedNode {
+            virtualObject.removeFromParentNode()
+        }
+        self.lastPlacedNode.removeAll()
+        
+        self.lastPlacedNode.append(planeNode)
         self.sceneView.scene.rootNode.addChildNode(planeNode)
     }
     
@@ -1708,6 +1765,55 @@ class ViewController: UIViewController, ARSCNViewDelegate, UIPopoverPresentation
         for node in self.nodes{
             node.removeFromParentNode()
         }
+    }
+    
+    var sublayerArray: [CALayer] = []
+    
+    func highlightWord(observation: VNFaceObservation) {
+        
+        
+        var maxX: CGFloat = 9999.0
+        var minX: CGFloat = 0.0
+        var maxY: CGFloat = 9999.0
+        var minY: CGFloat = 0.0
+        
+        let rect = observation.boundingBox
+        
+        print(rect.midX)
+        print(rect.midY)
+        print(rect.minX)
+        print(rect.minY)
+        print(rect.maxX)
+        print(rect.maxY)
+        
+        let w = rect.maxX-rect.minX//observation.boundingBox.size.width
+        let h = rect.maxY-rect.minY//observation.boundingBox.size.height
+        let x = rect.minX//observation.boundingBox.midX - w*0.5
+        let y = (1-rect.minY)-h//observation.boundingBox.midY - h*0.5
+        
+        print(w)
+        print(h)
+        print(x)
+        print(y)
+        
+        
+        let xCord = (x) * sceneView.frame.size.width
+        let yCord = (y) * sceneView.frame.size.height
+        let width = w * sceneView.frame.size.width
+        let height = h * sceneView.frame.size.height
+        
+        let outline = CALayer()
+        outline.frame = CGRect(x: xCord, y: yCord, width: width, height: height)
+        outline.borderWidth = 2.0
+        outline.borderColor = UIColor.red.cgColor
+        
+        for item in self.sublayerArray {
+            item.removeFromSuperlayer()
+        }
+        self.sublayerArray.removeAll()
+        
+        self.sublayerArray.append(outline)
+        sceneView.layer.addSublayer(outline)
     }
     
 }
