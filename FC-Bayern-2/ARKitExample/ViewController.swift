@@ -887,7 +887,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, UIPopoverPresentation
 	@IBOutlet weak var settingsButton: UIButton!
 	
 	@IBAction func showSettings(_ button: UIButton) {
-        showVideo()
+        self.isAnimating = true
 		/*let storyboard = UIStoryboard(name: "Main", bundle: nil)
 		guard let settingsViewController = storyboard.instantiateViewController(withIdentifier: "settingsViewController") as? SettingsViewController else {
 			return
@@ -1227,24 +1227,23 @@ class ViewController: UIViewController, ARSCNViewDelegate, UIPopoverPresentation
         return SCNVector3Make(x/Float(max), y/Float(max), z/Float(max))
     }
     
-    var smileyNumber = 0;
+    var smileyNumber = 0
+    var placeElvis = false
     
-    func initFaceDetectionRequest(frame: ARFrame) -> VNDetectFaceRectanglesRequest{
+    func initFaceDetectionRequest(frame: ARFrame) -> VNDetectFaceLandmarksRequest{
         
         
-        let faceDetectionRequest = VNDetectFaceRectanglesRequest { (request, error) in
-            print("FaceDetectionRequest HANDLER")
+        let faceDetectionRequest = VNDetectFaceLandmarksRequest { (request, error) in
+            //print("FaceDetectionRequest HANDLER")
             
-        print(request)
-            print(request.results)
             
             guard let observations = request.results else {
-                print("no result")
+                //print("no result")
                 return
             }
             
             if (request.results?.isEmpty)! {
-                print("Requests are empty")
+                //print("Requests are empty")
             }
             
         
@@ -1259,7 +1258,11 @@ class ViewController: UIViewController, ARSCNViewDelegate, UIPopoverPresentation
             for observation in result {
                 if let observation = observation {
                     DispatchQueue.main.async {
-                        self.highlightWord(observation: observation)
+                            self.highlightWord(observation: observation)
+                        
+                        if self.isAnimating {
+                            self.loveAnimation()
+                        }
                     }
                     
                     //let midPointWrong = observation.boundingBox.mid
@@ -1267,8 +1270,16 @@ class ViewController: UIViewController, ARSCNViewDelegate, UIPopoverPresentation
                     
                     
                     //var midPoint = CGPoint.init(x: midPointWrong.y, y: midPointWrong.x)
+                    /*
+                    print("Eye: \(observation.landmarks?.rightEye)")
                     
-                    print(observation.boundingBox.mid)
+                    if observation.landmarks?.rightEye != nil {
+                        if observation.landmarks?.rightEye?.normalizedPoints.first != nil {
+                            if self.placeElvis == true {
+                                placeElvis2D(center: observation.landmarks?.rightEye?.normalizedPoints.first)
+                            }
+                        }
+                    }*/
                     /*
                     let minX = observation.boundingBox.minX
                     let minY = observation.boundingBox.minY
@@ -1310,10 +1321,6 @@ class ViewController: UIViewController, ARSCNViewDelegate, UIPopoverPresentation
                     bottomRight.x = x+w
                     bottomRight.y = y
                     
-                    print("TopLeft \(topLeft)")
-                    print("TopRight \(topRight)")
-                    print("BottomLeft \(bottomLeft)")
-                    print("BottomRight \(bottomRight)")
                     
 
                     
@@ -1339,17 +1346,12 @@ class ViewController: UIViewController, ARSCNViewDelegate, UIPopoverPresentation
                     let bottomLeftVector = SCNVector3Make(hitResultBottomLeft.worldTransform.columns.3.x, hitResultBottomLeft.worldTransform.columns.3.y, hitResultBottomLeft.worldTransform.columns.3.z)
                     let bottomRightVector = SCNVector3Make(hitResultBottomRight.worldTransform.columns.3.x, hitResultBottomRight.worldTransform.columns.3.y, hitResultBottomRight.worldTransform.columns.3.z)
                     
-                    print("TopLeft \(topLeftVector)")
-                    print("TopRight \(topRightVector)")
-                    print("BottomLeft \(bottomLeftVector)")
-                    print("BottomRight \(bottomRightVector)")
                     
                     let vectorHorizontal = topRightVector-topLeftVector
                     let vectorVertical = bottomLeftVector-topLeftVector
                     let vectorNormal = vectorHorizontal.cross(vectorVertical)
                     let vectorToPlaneCenter = bottomRightVector+(topLeftVector-bottomRightVector)*0.5
                     
-                    print("VecNormal \(vectorNormal)")
                     
                     // SET VARIABLES
                     self.vecHalfRight = vectorHorizontal*0.5
@@ -1381,7 +1383,6 @@ class ViewController: UIViewController, ARSCNViewDelegate, UIPopoverPresentation
                     }
                     let midVector = SCNVector3Make(hitResultMid.worldTransform.columns.3.x, hitResultMid.worldTransform.columns.3.y, hitResultMid.worldTransform.columns.3.z)
                     
-                    print("Mid Vector \(midVector)")
                     
                     //self.place2DImage(width: 0.20, vecNormal: self.vecNormal!, vecToCenter: midVector, offsetHoriz: Float(0), offsetVert: Float(0), image: #imageLiteral(resourceName: "widgets-2"))
                     
@@ -1692,12 +1693,17 @@ class ViewController: UIViewController, ARSCNViewDelegate, UIPopoverPresentation
     
     
     @IBAction func touchInRectangleButton(_ button: UIButton) {
-        if currentButton == buttonRectangleDetection{
+        /*if currentButton == buttonRectangleDetection{
             //DROPDOWN MENUE
             self.dropdownMenue(button)
             
         }else{
             prepareThird()
+        }*/
+        if self.placeElvis {
+            self.placeElvis = false
+        }else{
+            self.placeElvis = true
         }
     }
     
@@ -1869,7 +1875,11 @@ class ViewController: UIViewController, ARSCNViewDelegate, UIPopoverPresentation
         let outline = CALayer()
         outline.frame = CGRect(x: xCord, y: yCord, width: width, height: height)
         outline.borderWidth = 2.0
-        outline.borderColor = UIColor.red.cgColor
+        outline.borderColor = UIColor.green.cgColor
+        
+        if self.placeElvis {
+            outline.contents = UIImage(named: "elvis")?.cgImage
+        }
         
         for item in self.sublayerArray {
             item.removeFromSuperlayer()
@@ -1879,5 +1889,69 @@ class ViewController: UIViewController, ARSCNViewDelegate, UIPopoverPresentation
         self.sublayerArray.append(outline)
         sceneView.layer.addSublayer(outline)
     }
+    
+    var isAnimating = false;
+    
+    var loveArray: [CALayer] = []
+    
+    var animationCounter = 0
+    var animationTotal = 20
+    var slowStep = 0.001
+    var midStep = 0.004
+    var fastStep = 0.008
+    
+    func loveAnimation() {
+        
+        animationCounter = animationCounter + 1
+        
+        let outline1 = createLoveAnimationLayer(yOffset: CGFloat(Double(animationCounter)*slowStep))
+        let outline2 = createLoveAnimationLayer(yOffset: CGFloat(Double(animationCounter)*midStep))
+        let outline3 = createLoveAnimationLayer(yOffset: CGFloat(Double(animationCounter)*fastStep))
+        
+        if animationCounter > animationTotal {
+            isAnimating = false
+            animationCounter = 0
+        }
+        
+        for item in self.loveArray {
+            item.removeFromSuperlayer()
+        }
+        self.loveArray.removeAll()
+        
+        if isAnimating {
+        self.loveArray.append(outline1)
+        sceneView.layer.addSublayer(outline1)
+        self.loveArray.append(outline2)
+        sceneView.layer.addSublayer(outline2)
+        self.loveArray.append(outline3)
+        sceneView.layer.addSublayer(outline3)
+        }
+    }
+    
+    func createLoveAnimationLayer(yOffset: CGFloat) ->CALayer {
+        let w = CGFloat(0.3)//observation.boundingBox.size.width
+        let h = CGFloat(0.3*260.0/124.0)//observation.boundingBox.size.height
+        let x = CGFloat(0.7)//observation.boundingBox.midX - w*0.5
+        let y = CGFloat(1.0-h-yOffset)//observation.boundingBox.midY - h*0.5
+        
+        
+        
+        
+        let xCord = (x) * sceneView.frame.size.width
+        let yCord = (y) * sceneView.frame.size.height
+        let width = w * sceneView.frame.size.width
+        let height = h * sceneView.frame.size.height
+        
+        let outline = CALayer()
+        outline.frame = CGRect(x: xCord, y: yCord, width: width, height: height)
+        /*outline.borderWidth = 2.0
+        outline.borderColor = UIColor.red.cgColor*/
+        
+            outline.contents = UIImage(named: "hearths")?.cgImage
+        
+        return outline
+    }
+    
+    
     
 }

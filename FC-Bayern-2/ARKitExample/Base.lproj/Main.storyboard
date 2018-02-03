@@ -67,13 +67,13 @@
                                     <action selector="takeScreenshot" destination="BV1-FR-VrT" eventType="touchUpInside" id="WC9-Ab-ZYV"/>
                                 </connections>
                             </button>
-                            <button hidden="YES" opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="j8v-6q-UBb">
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="j8v-6q-UBb">
                                 <rect key="frame" x="312" y="604" width="48" height="48"/>
                                 <constraints>
                                     <constraint firstAttribute="width" constant="48" id="d64-mp-aph"/>
                                     <constraint firstAttribute="height" constant="48" id="wp6-r1-7N1"/>
                                 </constraints>
-                                <state key="normal" image="settings">
+                                <state key="normal" image="ic_favorite" backgroundImage="shutter">
                                     <color key="titleColor" red="0.85882352939999995" green="0.72941176470000002" blue="0.22352941179999999" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                 </state>
                                 <state key="highlighted" image="settingsPressed"/>
@@ -94,13 +94,13 @@
                                     <action selector="chooseObject:" destination="BV1-FR-VrT" eventType="touchUpInside" id="6wa-rW-fJZ"/>
                                 </connections>
                             </button>
-                            <button hidden="YES" opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="8AA-8q-OV8" userLabel="RectangleDetectionButton">
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="8AA-8q-OV8" userLabel="RectangleDetectionButton">
                                 <rect key="frame" x="231.5" y="588" width="64" height="64"/>
                                 <constraints>
                                     <constraint firstAttribute="height" constant="64" id="xQE-rK-sVf"/>
                                     <constraint firstAttribute="width" constant="64" id="y6v-IT-8JA"/>
                                 </constraints>
-                                <state key="normal" image="ic_people_48pt" backgroundImage="circles_gray">
+                                <state key="normal" image="ic_accessibility_48pt" backgroundImage="shutter">
                                     <color key="titleColor" red="0.85882352939999995" green="0.72941176470000002" blue="0.22352941179999999" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                 </state>
                                 <connections>
@@ -567,12 +567,12 @@
     <resources>
         <image name="circles_gray" width="66" height="66"/>
         <image name="circles_white" width="66" height="66"/>
+        <image name="ic_accessibility_48pt" width="48" height="48"/>
+        <image name="ic_favorite" width="24" height="24"/>
         <image name="ic_home_48pt" width="48" height="48"/>
         <image name="ic_looks_one_48pt" width="48" height="48"/>
-        <image name="ic_people_48pt" width="48" height="48"/>
         <image name="restart" width="20" height="23"/>
         <image name="restartPressed" width="20" height="23"/>
-        <image name="settings" width="41" height="48"/>
         <image name="settingsPressed" width="41" height="48"/>
         <image name="shutter" width="48" height="48"/>
         <image name="shutterPressed" width="48" height="48"/>
